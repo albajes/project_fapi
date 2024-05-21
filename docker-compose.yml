@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://albert:037700@db:5432/fastapi_db
+      - DATABASE_URL=postgresql+asyncpg://albert:12345@db:5432/fastapi_db
     depends_on:
       - db
   db:
@@ -21,7 +21,7 @@ services:
       - 5432:5432
     environment:
       - POSTGRES_USER=albert
-      - POSTGRES_PASSWORD=037700
+      - POSTGRES_PASSWORD=12345
       - POSTGRES_DB=fastapi_db
   nginx:
     image: nginx:latest
