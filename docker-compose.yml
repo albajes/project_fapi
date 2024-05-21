@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: /code/docker/entrypoint.sh
+    command: uvicorn main:app --reload --workers 1 --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://albert:037700@db:5432/fastapi_db
+    depends_on:
+      - db
+  db:
+    container_name: db
+    image: postgres:15.3
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=albert
+      - POSTGRES_PASSWORD=037700
+      - POSTGRES_DB=fastapi_db
+  nginx:
+    image: nginx:latest
+    ports:
+      - 8080:8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
