@@ -8,7 +8,6 @@ from starlette import status
 from starlette.authentication import requires
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from starlette.responses import Response
 
 from api.filters import PostFilter
 from api.managers import PostManager
@@ -19,22 +18,22 @@ post_router = APIRouter()
 
 
 @post_router.get('/all', response_model=Page[PostResponseDetail])
-async def get_all_posts(manager: Annotated[Permissions, Depends()],
+async def get_all_posts(manager: Annotated[PostManager, Depends()],
                         post_filter: Annotated[PostFilter, FilterDepends(PostFilter)],
                         author: Annotated[str, None] = None,
                         order_by: Annotated[str, None] = None):
-    posts = await manager.post_manager.get_all_posts(author, order_by, post_filter)
+    posts = await manager.get_all_posts(author, order_by, post_filter)
     if posts is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Post does not exist')
     return posts
 
 
 @post_router.get('/{post_id}', response_model=PostResponseDetail)
-async def get_post(post_id: UUID, manager: Annotated[Permissions, Depends()]):
-    post = await manager.post_manager.get_post(post_id)
+async def get_post(post_id: UUID, manager: Annotated[PostManager, Depends()]):
+    post = await manager.get_post(post_id)
     if post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Post does not exist')
-    post = await manager.post_manager.change_views(post.views + 1, post_id)
+    post = await manager.change_views(post.views + 1, post_id)
     return post
 
 
@@ -59,7 +58,7 @@ async def update_post(body: PostUpdate, request: Request, post_id: UUID,
 @post_router.delete("/{post_id}")
 @requires(['authenticated'])
 async def delete_post(post_id: UUID, request: Request,
-                      manager: PostManager = Depends(PostManager),
+                      manager: Annotated[PostManager, Depends()],
                       permission: Permissions = Depends(Permissions)):
     await permission.update_or_delete_post_permission(post_id=post_id, user=request.user)
     deleted_post_id = await manager.delete_post(post_id)
@@ -69,5 +68,5 @@ async def delete_post(post_id: UUID, request: Request,
 @post_router.patch("/{post_id}/like_button", response_model=PostResponseDetail)
 @requires(['authenticated'])
 async def add_or_remove_like(post_id: UUID, request: Request,
-                             manager: Annotated[Permissions, Depends()]):
-    return await manager.post_manager.set_or_remove_like(post_id=post_id, user_id=request.user.id)
+                             manager: Annotated[PostManager, Depends()]):
+    return await manager.set_or_remove_like(post_id=post_id, user_id=request.user.id)

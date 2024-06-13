@@ -1,4 +1,3 @@
-import sqlalchemy
 from fastapi import Depends
 from fastapi_filter.contrib.sqlalchemy import Filter
 from fastapi_pagination.ext.async_sqlalchemy import paginate

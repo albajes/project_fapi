@@ -11,6 +11,7 @@ from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
 from api.filters import BlogFilter
+from api.managers import BlogManager
 from api.permissions import Permissions
 from api.schemas import BlogResponse, BlogCreate, AddOrRemoveAuthorToBlog, BlogResponseDetail, BlogUpdate
 
@@ -18,17 +19,17 @@ blog_router = APIRouter()
 
 
 @blog_router.get("/all", response_model=Page[BlogResponseDetail])
-async def get_all_blogs(manager: Annotated[Permissions, Depends()],
+async def get_all_blogs(manager: Annotated[BlogManager, Depends()],
                         blog_filter: Annotated[BlogFilter, FilterDepends(BlogFilter)],
                         author: Annotated[str, None] = None,
                         order_by: Annotated[str, None] = None):
-    blogs = await manager.blog_manager.get_all_blogs(author, order_by, blog_filter)
+    blogs = await manager.get_all_blogs(author, order_by, blog_filter)
     return blogs
 
 
 @blog_router.get("/{blog_id}", response_model=BlogResponseDetail)
-async def get_blog(blog_id: uuid.UUID, manager: Annotated[Permissions, Depends()]):
-    blog = await manager.blog_manager.get_blog(blog_id)
+async def get_blog(blog_id: uuid.UUID, manager: Annotated[BlogManager, Depends()]):
+    blog = await manager.get_blog(blog_id)
     if blog is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Blog does not found')
     return blog
@@ -36,8 +37,8 @@ async def get_blog(blog_id: uuid.UUID, manager: Annotated[Permissions, Depends()
 
 @blog_router.post("/", response_model=BlogResponse)
 @requires(['authenticated'])
-async def create_blog(body: BlogCreate, request: Request, manager: Annotated[Permissions, Depends()]):
-    return await manager.blog_manager.create_blog(body=body, owner_id=request.user.id)
+async def create_blog(body: BlogCreate, request: Request, manager: Annotated[BlogManager, Depends()]):
+    return await manager.create_blog(body=body, owner_id=request.user.id)
 
 
 @blog_router.patch("/{blog_id}", response_model=BlogResponseDetail)

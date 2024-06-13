@@ -9,6 +9,7 @@ from api.user.login_handlers import login_router
 from api.user.user_handlers import user_router
 from middleware import BearerTokenAuthBackend
 
+
 app = FastAPI()
 add_pagination(app)
 
